@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const getProductData = (product) => {
         let priceText = product.querySelector('.fw-bolder').parentElement.textContent;
         let price;
-        
+
         // Remove the non-numeric characters and extract the price
         priceText = priceText.replace(/\s/g, '').replace(/[^\d\.-]/g, '');
-        
+
         if (priceText.includes('-')) {
             const priceRange = priceText.split('-').map(price => parseFloat(price.replace('$', '').trim()));
             price = (priceRange[0] + priceRange[1]) / 2; // Take the average of the price range
@@ -17,11 +17,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const rating = product.querySelectorAll('.bi-star-fill').length;
-        return { product, price, rating };
+        const isOnSale = product.querySelector('.badge') !== null; // Check if the product has a "Sale" badge
+        return { product, price, rating, isOnSale };
     };
 
     const sortProducts = (criteria, order = 'asc') => {
         const sortedProducts = products.map(getProductData).sort((a, b) => {
+            // Sort by sale status first
+            if (a.isOnSale !== b.isOnSale) {
+                return a.isOnSale ? -1 : 1; // Sale items should come first
+            }
+            
+            // Then sort by criteria
             if (criteria === 'price') {
                 return order === 'asc' ? a.price - b.price : b.price - a.price;
             } else if (criteria === 'rating') {
@@ -33,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sortedProducts.forEach(item => productsContainer.appendChild(item.product));
     };
 
+    // Initial sorting: show sale items first
+    sortProducts('price', 'asc'); // Default to price sorting or any other criteria as needed
+
     document.querySelector('.dropdown-menu').addEventListener('click', function(event) {
         if (event.target.matches('.dropdown-item')) {
             const sortOption = event.target.textContent.trim();
@@ -40,10 +50,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 sortProducts('price', 'desc');
             } else if (sortOption === 'Price Low to High') {
                 sortProducts('price', 'asc');
-            } else if (sortOption === 'Rating High to Low') {
-                sortProducts('rating', 'desc');
             } else if (sortOption === 'Rating Low to High') {
                 sortProducts('rating', 'asc');
+            } else if (sortOption === 'Rating High to Low') {
+                sortProducts('rating', 'desc');
             }
         }
     });
